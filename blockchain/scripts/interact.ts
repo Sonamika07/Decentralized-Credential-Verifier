@@ -24,12 +24,12 @@ async function main() {
   console.log("\n1. Issuing credential...");
 
   const issueTx = await credentialVerifier.issueCredential(
-    "CERT-001",
+    "CERT-002",
     "Sonamika Anand",
     "B.Tech CSE",
     "Roorkee Institute of Technology",
     "2026-09-25",
-    "QmExampleCID123"
+    "bafkreib2bpeohp6edaw2ihrscg3rin6y3kv3giqm2pojnmj6kz3asm4lm4"
   );
 
   await issueTx.wait();
@@ -39,7 +39,7 @@ async function main() {
   console.log("\n2. Verifying credential...");
 
   const credential =
-    await credentialVerifier.verifyCredential("CERT-001");
+    await credentialVerifier.verifyCredential("CERT-002");
 
   console.log("Student Name:", credential[0]);
   console.log("Course:", credential[1]);
@@ -52,7 +52,7 @@ async function main() {
   console.log("\n3. Revoking credential...");
 
   const revokeTx =
-    await credentialVerifier.revokeCredential("CERT-001");
+    await credentialVerifier.revokeCredential("CERT-002");
 
   await revokeTx.wait();
 
@@ -61,7 +61,7 @@ async function main() {
   console.log("\n4. Verifying after revocation...");
 
   const updatedCredential =
-    await credentialVerifier.verifyCredential("CERT-001");
+    await credentialVerifier.verifyCredential("CERT-002");
 
   console.log("Student Name:", updatedCredential[0]);
   console.log("Revoked:", updatedCredential[5]);

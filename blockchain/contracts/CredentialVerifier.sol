@@ -4,7 +4,9 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CredentialVerifier is Ownable {
+
     struct Credential {
+        address issuer;
         string studentName;
         string course;
         string institution;
@@ -15,6 +17,11 @@ contract CredentialVerifier is Ownable {
     }
 
     mapping(string => Credential) private credentials;
+
+    mapping(address => bool) public authorizedIssuers;
+
+    event IssuerAuthorized(address indexed issuer);
+    event IssuerRevoked(address indexed issuer);
 
     event CredentialIssued(
         string indexed credentialId,
@@ -28,7 +35,38 @@ contract CredentialVerifier is Ownable {
         string indexed credentialId
     );
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {
+        authorizedIssuers[msg.sender] = true;
+    }
+
+    modifier onlyAuthorizedIssuer() {
+        require(
+            authorizedIssuers[msg.sender],
+            "Not authorized issuer"
+        );
+        _;
+    }
+
+    function authorizeIssuer(
+        address issuer
+    ) public onlyOwner {
+        require(
+            issuer != address(0),
+            "Invalid issuer address"
+        );
+
+        authorizedIssuers[issuer] = true;
+
+        emit IssuerAuthorized(issuer);
+    }
+
+    function revokeIssuer(
+        address issuer
+    ) public onlyOwner {
+        authorizedIssuers[issuer] = false;
+
+        emit IssuerRevoked(issuer);
+    }
 
     function issueCredential(
         string memory credentialId,
@@ -37,10 +75,15 @@ contract CredentialVerifier is Ownable {
         string memory institution,
         string memory issueDate,
         string memory ipfsCID
-    ) public onlyOwner {
-        require(!credentials[credentialId].exists, "Credential already exists");
+    ) public onlyAuthorizedIssuer {
+
+        require(
+            !credentials[credentialId].exists,
+            "Credential already exists"
+        );
 
         credentials[credentialId] = Credential({
+            issuer: msg.sender,
             studentName: studentName,
             course: course,
             institution: institution,
@@ -74,7 +117,8 @@ contract CredentialVerifier is Ownable {
             bool exists
         )
     {
-        Credential memory credential = credentials[credentialId];
+        Credential memory credential =
+            credentials[credentialId];
 
         return (
             credential.studentName,
@@ -89,9 +133,26 @@ contract CredentialVerifier is Ownable {
 
     function revokeCredential(
         string memory credentialId
-    ) public onlyOwner {
-        require(credentials[credentialId].exists, "Credential does not exist");
-        require(!credentials[credentialId].revoked, "Credential already revoked");
+    ) public {
+
+        require(
+            credentials[credentialId].exists,
+            "Credential does not exist"
+        );
+
+        require(
+            msg.sender == owner() ||
+            (
+                msg.sender == credentials[credentialId].issuer &&
+                authorizedIssuers[msg.sender]
+            ),
+            "Not authorized to revoke"
+        );
+
+        require(
+            !credentials[credentialId].revoked,
+            "Credential already revoked"
+        );
 
         credentials[credentialId].revoked = true;
 
