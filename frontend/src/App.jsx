@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import contractData from "./contract/CredentialVerifier.json";
 
 const contractAddress =
-  "0x8225ccc6C9403851A1D562F6a6b8F3dB1b514E7F";
+  "0x7Ae3B202490fDb30FbE2D977A4fB8D84592B979e";
 
 const contractABI = contractData.abi;
 
